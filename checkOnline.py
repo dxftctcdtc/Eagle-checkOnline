@@ -1,14 +1,17 @@
 # -*- coding:utf-8 -*-
 #author: Song Bo, Eagle, ZJU
 #email: sbo@zju.edu.cn
-'''在onlinecheck上申请任务的脚本
-'''
+
 import urllib
 import urllib2
 from urllib2 import Request, urlopen, URLError, HTTPError
 import cookielib
 import sys
 import re
+
+version = 'V0.3.1'
+date = '2014-7-24'
+
 
 headers = {'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
 		'Accept-Encoding':'gzip,deflate,sdch',
@@ -28,6 +31,21 @@ applyTaskURL = ipAddress + '/OnlineCheck/taskitem/applytask'
 
 username = ''
 password = ''
+
+def chmod(mes, encoding ='utf-8'):
+	if isinstance(mes, unicode):
+		return mes.encode(encoding)
+
+	for c in ('utf-8', 'gbk', 'gb2312', 'gb18030', 'utf-16'):
+		try:
+			if encoding == 'unicode':
+				return mes.decode(c)
+			else:
+				return mes.decode(c).encode(encoding)
+		except:
+			pass
+	raise 'Unknown charset'
+
 def myFormat(string, length=0):
 	if length == 0:
 		return string
@@ -276,8 +294,10 @@ def rejectTestPages():
 		#get submit url
 		submitURL = re.search('''<form\saction="([\w/]+)"\smethod="post"''',html).group(1)
 		submitURL = ipAddress + submitURL
-		postData = {"ruleid":"%s" % ruleID,"checkresult":"0","optionsRadios":"0","frequentmessage":"","message":"%s" %mes}
+		postData = {"ruleid":"%s" % ruleID,"checkresult":"0","optionsRadios":"0","frequentmessage":"","message":"%s" %chmod(mes, "utf-8")}
 		postData = urllib.urlencode(postData)
+		print postData
+		return
 		req = Request(submitURL,postData, headers = headers)
 		nPage+=1
 		print testPageURL + '---Reject: ' + mes
@@ -294,8 +314,8 @@ def isLogin():
 
 def main():
 	global username, password
-	print 'Welcome to Web Accessibility initiative script. V0.3 '
-	print 'Eagle, ZJU. 2014-7-21'
+	print 'Welcome to Web Accessibility Initiative Script. %s ' % version
+	print 'Eagle, ZJU. %s' % date
 	username = raw_input('Please enter your username: ')
 	#username = 'songbo'
 	import getpass
@@ -314,7 +334,7 @@ def main():
 		3. Reject test pages.
 		0. Exit.
 			'''
-			taskID = int(raw_input('Please enter task id(1-4): '))
+			taskID = int(raw_input('Please enter task id(0-3): '))
 			if taskID < 0 or taskID > 3:
 				raise ValueError, 'Invalid task id'
 		except ValueError, e:
@@ -337,26 +357,4 @@ def main():
 
 if __name__ == '__main__':
 	main()
-			
-#11 4.3.1 文本大小调整（等级3）
-# 17 4.4.1 多媒体（等级2）
-# 25 5.2.1  键盘操作（等级3）
-# 27 5.2.3 键盘焦点陷入（等级1）
-# 30 5.2.6 跳过导航栏（等级3）
-# 31 5.2.7 板块跳转（等级3）
-# 32 5.2.8 多媒体播放控制（等级3）
-# 34 5.2.10 充足操作时间（等级2）
-# 38 5.2.14 无漂浮窗（等级1）
-# 40 5.3.1 输入提示（等级2）
-# 41 5.3.2 错误原因提示（等级2）
-# 42 5.3.3 错误原因提示（等级3）
-# 43 5.3.4 错误修改建议（等级3）
-# 45 5.3.6 错误预防（等级3）
-# 58 6.3.3 站内搜索功能和网站地图（等级3）
-# 61 6.4.1 帮助信息（等级2）
-# 66 7.2.1 无障碍内容版本（等级1）
-# 67 7.2.2 无障碍内容版本链接位置（等级1）
-# 68 7.2.3 无障碍内容版本链接形式（等级1）
-# 70 7.3.1 用户交互兼容性（等级1）
-# 71 7.3.2  用户交互兼容性（等级2）
-# 72 7.3.3 反馈联络（等级1）
+	

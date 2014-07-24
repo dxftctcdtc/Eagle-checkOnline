@@ -32,6 +32,7 @@ applyTaskURL = ipAddress + '/OnlineCheck/taskitem/applytask'
 username = ''
 password = ''
 
+#Change encoding type
 def chmod(mes, encoding ='utf-8'):
 	if isinstance(mes, unicode):
 		return mes.encode(encoding)
@@ -46,6 +47,7 @@ def chmod(mes, encoding ='utf-8'):
 			pass
 	raise 'Unknown charset'
 
+#alian string format
 def myFormat(string, length=0):
 	if length == 0:
 		return string
@@ -59,8 +61,9 @@ def myFormat(string, length=0):
 		re += placeholder
 		slen += 1
 	return re
-def login(username, password):
 
+
+def login(username, password):
 	#构造登陆post表单
 	postData = 'username=%s&password=%s' %(username, password)
 	#记录cookies并下载到本地
@@ -84,6 +87,7 @@ def login(username, password):
 		return True
 	else:
 		return False
+
 def applyTask(minWebID, maxWebID, taskID = None):
 	if not isLogin():
 		print 'Session expired. Login again...'
@@ -141,8 +145,8 @@ def applyTask(minWebID, maxWebID, taskID = None):
 				req = Request(applyTaskURL, postData, headers)
 				res = urlopen(req)
 	print "Apply %s tasks successfully." % nTask
-def fetchAvaliabletasks():
 
+def fetchAvaliabletasks():
 	req = Request(applyTaskURL, headers = headers)
 	html = urlopen(req).read()
 	options = re.findall('''<option value="(.*)" ''', html, re.I)
@@ -169,6 +173,7 @@ def applyTasks():
 	if websiteID == 0:
 		return True
 	applyTask(websiteID,websiteID)
+
 def fetchPendingTasks():
 	if not isLogin():
 		print 'Session expired. Login again...'
@@ -199,25 +204,30 @@ def fetchPendingTasks():
 	#item[3] = rule id
 	#item[4] = rule name
 	return taskIDs
+
 def passTestPages():
 	taskIDs = fetchPendingTasks()
 	if taskIDs == False:
 		return False
 	try:
-		isBreak = False
+		shouldPassAll = False
 		while True:
-			if isBreak == True:
-				break 
-			isBreak = True
-			taskIDs = raw_input('Please enter the task id you want to pass(enter 0 to return): ').split(' ')
+			sInputTaskIDs = raw_input('Please enter taskIDs you want to pass(enter 0 to return): ').split(' ')
 			#taskID = int(raw_input('Please enter the task id you want to pass(enter 0 to return): '))
-			for taskID in taskIDs:
+			iInputTaskIDs = []
+			for taskID in sInputTaskIDs:
 				taskID = int(taskID)
-				if taskID == 0:
+				if taskID == -1:
+					shouldPassAll = True
+				elif taskID == 0:
 					return True
-				if str(taskID) not in taskIDs:
+				elif taskID not in taskIDs:
 					print 'Illegal taskID. taskID is not in the list. Please enter it again'
-					isBreak = False
+					break
+				else:
+					iInputTaskIDs.append(taskID)
+			else:
+				break
 	except:
 		print 'Illegal taskID'
 		return False
@@ -226,8 +236,13 @@ def passTestPages():
 		login(username, password)
 	#enter check page
 	nPage = 0
-	for taskID in taskIDs:
-		checkPageURL = taskItemURL+ '/check/' + taskID
+	if shouldPassAll == True:
+		s = raw_input("Are you sure to pass ALL the tasks?(y/n): ")
+		if s != 'y' and s !='Y':
+			return True
+		iInputTaskIDs = taskIDs
+	for taskID in iInputTaskIDs:
+		checkPageURL = taskItemURL+ '/check/' + str(taskID)
 		req = Request(checkPageURL,headers = headers)
 		while True:
 			res = urlopen(req)
@@ -249,7 +264,7 @@ def passTestPages():
 			postData = urllib.urlencode(postData)
 			req = Request(submitURL,postData, headers = headers)
 			nPage+=1
-			print testPageURL + '---Pass'
+			print testPageURL + '---PASS'
 		
 	print 'Pass %s pages successfully.' %nPage
 
@@ -296,11 +311,9 @@ def rejectTestPages():
 		submitURL = ipAddress + submitURL
 		postData = {"ruleid":"%s" % ruleID,"checkresult":"0","optionsRadios":"0","frequentmessage":"","message":"%s" %chmod(mes, "utf-8")}
 		postData = urllib.urlencode(postData)
-		print postData
-		return
 		req = Request(submitURL,postData, headers = headers)
 		nPage+=1
-		print testPageURL + '---Reject: ' + mes
+		print testPageURL + '---REJECT: ' + mes
 		
 	print 'Reject %s pages successfully.' %nPage
 
@@ -357,4 +370,3 @@ def main():
 
 if __name__ == '__main__':
 	main()
-	
